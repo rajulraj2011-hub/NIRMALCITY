@@ -82,6 +82,7 @@ if JWT_SECRET in JWT_SECRET_PLACEHOLDERS or len(JWT_SECRET) < 32:
 
 JWT_HOURS = env_int('JWT_HOURS', 24)
 ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', '').strip().lower()
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
 CORS_ORIGINS = [origin.strip() for origin in os.getenv('CORS_ORIGINS', '').split(',') if origin.strip()]
 MONGO_URI = os.getenv('MONGO_URI', 'mongodb://127.0.0.1:27017')
 MONGO_DB_NAME = os.getenv('MONGO_DB_NAME', 'nirmalcity')
@@ -90,6 +91,10 @@ ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
 THUMB_SIZE = env_int('THUMB_SIZE', 320)
 THUMB_QUALITY = env_int('THUMB_QUALITY', 82)
 MAX_PASSWORD_LENGTH = 128
+if ADMIN_PASSWORD and not ADMIN_EMAIL:
+    raise SystemExit('ADMIN_EMAIL is required when ADMIN_PASSWORD is configured.')
+if ADMIN_PASSWORD and not 8 <= len(ADMIN_PASSWORD) <= MAX_PASSWORD_LENGTH:
+    raise SystemExit('ADMIN_PASSWORD must be between 8 and 128 characters.')
 PHOTO_URL_TTL_HOURS = env_int('PHOTO_URL_TTL_HOURS', 24)
 REPORT_STATUSES = ('Pending', 'In Progress', 'Resolved')
 
@@ -1600,9 +1605,36 @@ def make_admin(email):
     return 0
 
 
+def bootstrap_admin_account():
+    """Create the configured admin once; never reset an existing password."""
+    if not (ADMIN_EMAIL and ADMIN_PASSWORD):
+        return False
+    result = users.update_one(
+        {'email': ADMIN_EMAIL},
+        {'$setOnInsert': {
+            'email': ADMIN_EMAIL,
+            'password_hash': generate_password_hash(ADMIN_PASSWORD),
+            'role': 'admin',
+            'session_epoch': 0,
+            'points': 0,
+            'created_at': utc_now(),
+        }},
+        upsert=True,
+    )
+    users.update_one({'email': ADMIN_EMAIL}, {'$set': {'role': 'admin'}})
+    return result.upserted_id is not None
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'make-admin':
         sys.exit(make_admin(sys.argv[2] if len(sys.argv) > 2 else ''))
+    if ADMIN_PASSWORD:
+        try:
+            ensure_indexes()
+            created = bootstrap_admin_account()
+            app.logger.info('Admin bootstrap account %s.', 'created' if created else 'already exists')
+        except PyMongoError:
+            app.logger.warning('Admin bootstrap skipped because MongoDB is unavailable.')
     # Automatic coupon feed: every COUPON_REFRESH_DAYS (default 4) the
     # scheduler re-verifies the trusted sources and merges fresh codes.
     # Started only in the served process — tests import this module without
