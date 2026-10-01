@@ -1,0 +1,6 @@
+Flask>=3.0,<4
+flask-cors>=4.0,<7
+python-dotenv>=1.0,<2
+PyMongo>=4.8,<5
+PyJWT>=2.9,<3
+Pillow>=10,<13

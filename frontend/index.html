@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NIRMALCITY - Smart App</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* APP RESET & BASE */
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            color: #333;
+            transition: background 0.5s ease-in-out;
+            -webkit-tap-highlight-color: transparent; /* Removes tap highlight on mobile */
+        }
+        
+        /* APP CONTAINER (Simulates Mobile Screen on Desktop) */
+        .app-container {
+            max-width: 500px; /* Mobile width */
+            margin: 0 auto;
+            position: relative;
+            min-height: 100vh;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* FIXED TOP APP BAR */
+        #main-header { 
+            background: rgba(17, 153, 142, 0.95); 
+            color: white; 
+            padding: 15px 20px; 
+            text-align: center; 
+            display: none;
+            backdrop-filter: blur(10px);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            z-index: 1000;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        #main-header h1 { margin: 0; font-size: 22px; letter-spacing: 1px; text-transform: uppercase; font-weight: 800; }
+        #main-header p { margin: 2px 0 0; font-size: 12px; opacity: 0.9; }
+
+        /* FIXED BOTTOM NAVIGATION BAR */
+        #main-nav { 
+            display: none; 
+            background: rgba(255, 255, 255, 0.95); 
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(15px);
+            position: fixed;
+            bottom: 0;
+            z-index: 1000;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            padding: 10px 5px;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+        }
+        #main-nav::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome */
+        
+        #main-nav button { 
+            margin: 0 2px; 
+            padding: 8px 12px; 
+            cursor: pointer; 
+            background: transparent; 
+            color: #7f8c8d;
+            border: none; 
+            border-radius: 15px; 
+            font-weight: 600; 
+            font-size: 11px;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+            min-width: 65px;
+        }
+
+        #main-nav button span.icon { font-size: 22px; margin-bottom: 4px; }
+        
+        #main-nav button:hover { background: rgba(17, 153, 142, 0.05); color: #11998e; }
+        #main-nav button.active-nav { 
+            background: linear-gradient(135deg, #11998e, #38ef7d); 
+            color: white; 
+            box-shadow: 0 4px 10px rgba(17,153,142,0.3);
+            transform: translateY(-5px);
+        }
+
+        /* SCROLLABLE CONTENT AREA */
+        .content-area {
+            flex: 1;
+            width: 100%;
+            padding: 80px 15px 100px 15px; /* Spacing for fixed header and bottom nav */
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        
+        .section { 
+            display: none; 
+            padding: 25px 20px; 
+            background: rgba(255, 255, 255, 0.95); 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+            border: 1px solid rgba(255,255,255,0.6);
+            position: relative; 
+            backdrop-filter: blur(12px);
+            margin-bottom: 20px;
+        }
+        .active-section { display: block; animation: slideUp 0.4s ease; }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { color: #2c3e50; font-size: 20px; border-bottom: 3px solid #38ef7d; padding-bottom: 8px; margin-top: 0; display: inline-block; }
+        
+        .section-banner {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* SPLASH SCREEN (APP LAUNCH) */
+        #overview { 
+            text-align: center; 
+            min-height: 100vh; 
+            display: flex;
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 40px 20px;
+            margin: 0;
+            border-radius: 0;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 2000;
+        }
+
+        .brand-name {
+            font-size: 48px;
+            font-weight: 800;
+            margin: 0 0 10px 0;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0px 5px 15px rgba(17, 153, 142, 0.2);
+        }
+
+        .overview-logo { font-size: 80px; margin-bottom: 10px; filter: drop-shadow(0 10px 15px rgba(17,153,142,0.3)); animation: float 3s ease-in-out infinite; }
+        .overview-title { font-size: 22px; color: #2c3e50; margin: 0; font-weight: 600; border: none; padding: 0; }
+        .overview-subtitle { font-size: 15px; color: #7f8c8d; margin-top: 15px; font-weight: 400; line-height: 1.5; }
+        .creator-tag { position: absolute; bottom: 20px; font-size: 12px; font-weight: 600; color: #95a5a6; font-style: italic; letter-spacing: 1px; }
+        
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+
+        .get-started-btn { 
+            margin-top: 40px; 
+            padding: 15px 40px; 
+            font-size: 18px; 
+            width: 80%;
+            background: linear-gradient(135deg, #11998e, #38ef7d); 
+            color: white; 
+            border: none; 
+            border-radius: 30px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            box-shadow: 0 10px 20px rgba(17,153,142,0.3); 
+            transition: all 0.3s ease; 
+        }
+        .get-started-btn:active { transform: scale(0.95); }
+
+        /* FORM STYLES */
+        .auth-toggle { display: flex; justify-content: center; margin-bottom: 20px; gap: 10px; background: #f0f2f5; padding: 5px; border-radius: 12px; }
+        .signup-step { display: flex; flex-direction: column; gap: 12px; }
+        .auth-step-hint { color: #7f8c8d; font-size: 13px; margin: 0 0 10px; text-align: center; }
+        .auth-step-status { min-height: 16px; margin: 8px 0 0; text-align: center; font-size: 13px; font-weight: 600; color: #11998e; }
+        .auth-step-status.warn { color: #b9770e; }
+        .auth-step-status.error { color: #c0392b; }
+        .auth-link-btn { background: none; border: none; color: #11998e; font-weight: 700; font-size: 13px; cursor: pointer; padding: 2px; }
+        .auth-link-btn:disabled { color: #95a5a6; cursor: wait; }
+        .auth-toggle button { flex: 1; padding: 10px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; background: transparent; color: #7f8c8d; border-radius: 8px; transition: 0.3s; }
+        .auth-toggle button.active-btn { background: white; color: #11998e; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        form, .step-container { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
+        input, select, textarea { 
+            padding: 15px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            font-family: 'Poppins', sans-serif;
+            background: #fdfdfd;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        input:focus, select:focus, textarea:focus { border-color: #38ef7d; outline: none; box-shadow: 0 0 0 3px rgba(56,239,125,0.2); background: white; }
+        
+        button.submit-btn { 
+            background: linear-gradient(135deg, #2b5876, #4e4376); 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            cursor: pointer; 
+            border-radius: 12px; 
+            font-size: 15px; 
+            font-weight: 600; 
+            box-shadow: 0 4px 15px rgba(43,88,118,0.3);
+            margin-top: 5px;
+        }
+        button.submit-btn:active { transform: scale(0.98); }
+        button.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+        .status-select { margin-top: 6px; padding: 8px 10px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 12px; font-family: 'Poppins', sans-serif; background: #fdfdfd; width: auto; min-width: 130px; }
+
+        /* Resend Timer Text & Button */
+        .resend-text { text-align: center; font-size: 13px; color: #7f8c8d; margin-top: 5px; font-weight: 600; }
+        .resend-btn-text { display: none; margin: 5px auto 0; background: none; border: none; color: #11998e; font-weight: 800; cursor: pointer; font-size: 14px; font-family: 'Poppins', sans-serif; padding: 5px 10px; text-decoration: underline; }
+        
+        .location-wrapper { display: flex; gap: 8px; align-items: center; }
+        .location-wrapper input { flex: 1; margin: 0; }
+        .location-btn { background: linear-gradient(135deg, #f2994a, #f2c94c); color: white; border: none; width: 50px; height: 50px; border-radius: 12px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(242,153,74,0.3); }
+        
+        .file-upload-wrapper { border: 2px dashed #38ef7d; padding: 20px; border-radius: 12px; text-align: center; background: rgba(56,239,125,0.05); margin-top: 5px; }
+        .file-upload-wrapper input[type="file"] { border: none; padding: 0; background: transparent; box-shadow: none; font-size: 12px; }
+
+        /* TABLES */
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; margin-top: 10px; font-size: 13px; }
+        th, td { padding: 12px 10px; text-align: left; vertical-align: middle; }
+        th { color: #7f8c8d; font-weight: 600; text-transform: uppercase; font-size: 11px; border-bottom: 2px solid #eee; }
+        tbody tr { background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 10px; }
+        td:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+        td:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+        
+        .status-pending { color: #f2994a; font-weight: 600; background: rgba(242,153,74,0.1); padding: 4px 8px; border-radius: 12px; font-size: 11px; }
+        .status-resolved { color: #27ae60; font-weight: 600; background: rgba(39,174,96,0.1); padding: 4px 8px; border-radius: 12px; font-size: 11px; }
+        .status-in-progress { color: #2980b9; font-weight: 600; background: rgba(52,152,219,0.1); padding: 4px 8px; border-radius: 12px; font-size: 11px; }
+        .resolve-btn { padding: 6px 12px; background: linear-gradient(135deg, #11998e, #38ef7d); color: white; border: none; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        
+        .awareness-card { padding: 15px; margin-bottom: 15px; border-radius: 12px; border-left: 5px solid transparent; }
+        .green-bin { background: linear-gradient(to right, #e8f8f5, #ffffff); border-left-color: #1abc9c; }
+        .blue-bin { background: linear-gradient(to right, #ebf5fb, #ffffff); border-left-color: #3498db; }
+        .red-bin { background: linear-gradient(to right, #fdedec, #ffffff); border-left-color: #e74c3c; }
+        .awareness-card h3 { font-size: 15px; margin-top: 0; }
+        .awareness-card p { font-size: 13px; margin-bottom: 0; color: #555; }
+
+        /* LIVE MONITOR: ROW ACTIONS */
+        .row-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+        .mini-btn {
+            padding: 7px 12px; border: none; border-radius: 10px; cursor: pointer;
+            background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff;
+            font-size: 11px; font-weight: 600; font-family: 'Poppins', sans-serif;
+        }
+        .mini-btn.secondary { background: #eef1f4; color: #2c3e50; }
+        .mini-btn:active { transform: scale(0.97); }
+        .mini-btn:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+        .no-photo { font-size: 11px; color: #95a5a6; font-style: italic; }
+
+        /* AI verification chips (Gemini) */
+        .verify-badge {
+            display: inline-block; padding: 3px 9px; border-radius: 8px;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.3px; margin-bottom: 4px;
+        }
+        .verify-badge.verify-ok { background: #e8f8f0; color: #16a085; border: 1px solid #a6e3d0; }
+        .verify-badge.verify-warn { background: #fdf3e0; color: #b9770e; border: 1px solid #f3d9a4; }
+        .verify-badge.verify-bad { background: #fdecea; color: #c0392b; border: 1px solid #f5b7b1; }
+        .verify-reason { display: block; color: #7f8c8d; font-size: 11px; margin-top: 3px; word-break: break-word; }
+
+        /* Group headers in the admin Track monitoring view */
+        #user-table .group-row td {
+            background: #eef7f5; font-weight: 700; padding: 12px 14px;
+            border-bottom: 2px solid #cfe9e3;
+        }
+        #user-table .group-row h4 { margin: 0; font-size: 14px; color: #148075; letter-spacing: 0.3px; }
+        #user-table .empty-group { text-align: center; color: #7f8c8d; font-style: italic; padding: 14px; }
+
+        /* Rewards panel: points + partner coupon cards */
+        .rewards-panel {
+            background: #fff; border: 1px solid #e3ece9; border-radius: 16px;
+            padding: 16px; margin-top: 18px;
+            box-shadow: 0 6px 18px rgba(20, 128, 117, 0.08);
+        }
+        .rewards-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .rewards-head h3 { margin: 0; font-size: 17px; color: #148075; }
+        .points-pill {
+            background: linear-gradient(135deg, #16a085, #148075); color: #fff;
+            border-radius: 999px; padding: 6px 14px; font-size: 14px;
+            font-weight: 700; white-space: nowrap;
+        }
+        .rewards-hint { color: #7f8c8d; font-size: 12.5px; margin: 8px 0 10px; }
+        .earnings-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+        .earning-row {
+            display: flex; align-items: center; gap: 8px; background: #f2faf8;
+            border: 1px solid #d9efe9; border-radius: 10px; padding: 7px 10px; font-size: 13px;
+        }
+        .earning-plus { color: #16a085; font-weight: 800; }
+        .earning-row small { color: #7f8c8d; }
+        .earnings-empty, .coupons-empty { color: #7f8c8d; font-style: italic; font-size: 13px; margin: 0; }
+        .coupons-title { margin: 4px 0 10px; font-size: 15px; }
+        .coupons-title small { color: #7f8c8d; font-weight: 600; }
+        .coupons-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+        .coupon-card {
+            border: 1px dashed #cfe3de; border-radius: 14px; padding: 12px;
+            background: #fbfefd; display: flex; flex-direction: column; gap: 6px;
+        }
+        .coupon-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .coupon-website { font-weight: 800; font-size: 14px; }
+        .coupon-type {
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.4px; padding: 3px 8px; border-radius: 999px;
+        }
+        .coupon-type.cashback { background: #e8f8f0; color: #16a085; border: 1px solid #a6e3d0; }
+        .coupon-type.discount { background: #fdf3e0; color: #b9770e; border: 1px solid #f3d9a4; }
+        .coupon-title { margin: 0; font-size: 13.5px; font-weight: 700; }
+        .coupon-terms { color: #7f8c8d; font-size: 11.5px; }
+        .coupon-actions { display: flex; align-items: center; gap: 8px; margin-top: auto; flex-wrap: wrap; }
+        .coupon-code {
+            font-family: 'Courier New', monospace; background: #eef7f5;
+            border: 1px dashed #16a085; color: #148075; padding: 5px 9px;
+            border-radius: 8px; font-weight: 700; letter-spacing: 1px; font-size: 13px;
+        }
+        .coupon-lock { color: #95a5a6; font-size: 12.5px; font-weight: 700; }
+        .coupon-meta {
+            display: flex; justify-content: space-between; gap: 6px;
+            font-size: 10.5px; color: #7f8c8d; font-weight: 600;
+        }
+        .coupon-meta span:first-child { color: #16a085; }
+        .coupon-visit {
+            font-size: 11.5px; font-weight: 700; color: #16a085;
+            text-decoration: none; white-space: nowrap;
+        }
+        .coupon-visit:hover { text-decoration: underline; }
+        .coupon-card.is-expired { opacity: 0.6; border-style: solid; }
+
+        /* MODALS (details + photo viewer) */
+        .modal {
+            position: fixed; inset: 0; z-index: 3000; display: none;
+            align-items: center; justify-content: center; padding: 16px;
+            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(3px);
+        }
+        .modal.open { display: flex; }
+        .modal-card {
+            background: #fff; border-radius: 18px; width: min(560px, 100%);
+            max-height: 86vh; overflow-y: auto; padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+        .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .modal-head h3 { margin: 0; font-size: 17px; color: #2c3e50; }
+        .icon-btn {
+            border: none; background: #f0f2f5; color: #2c3e50; width: 34px; height: 34px;
+            border-radius: 50%; font-size: 16px; cursor: pointer; line-height: 1; flex-shrink: 0;
+        }
+        .icon-btn:hover { background: #e3e7eb; }
+        .detail-list { margin: 0; }
+        .detail-row { display: flex; flex-direction: column; gap: 2px; padding: 9px 0; border-bottom: 1px dashed #e6e9ec; }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-row dt { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #7f8c8d; font-weight: 600; }
+        .detail-row dd { margin: 0; font-size: 14px; color: #2c3e50; word-break: break-word; white-space: pre-wrap; }
+        .detail-actions { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .modal-empty { text-align: center; color: #7f8c8d; font-size: 14px; padding: 26px 10px; margin: 0; }
+
+        /* PHOTO LIGHTBOX */
+        #photo-modal { flex-direction: column; align-items: stretch; padding: 0; background: rgba(0, 0, 0, 0.93); }
+        .photo-toolbar {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center;
+            padding: 10px 12px; background: rgba(17, 153, 142, 0.95); width: 100%; box-sizing: border-box;
+        }
+        .photo-toolbar .tool-btn {
+            border: none; background: rgba(255, 255, 255, 0.18); color: #fff; min-width: 42px;
+            height: 40px; padding: 0 14px; border-radius: 10px; font-size: 16px; font-weight: 700;
+            cursor: pointer; font-family: 'Poppins', sans-serif;
+        }
+        .photo-toolbar .tool-btn:hover { background: rgba(255, 255, 255, 0.32); }
+        .photo-toolbar .zoom-level { color: #fff; font-size: 13px; font-weight: 600; min-width: 56px; text-align: center; }
+        .photo-toolbar .close-btn { background: #e74c3c; margin-left: auto; }
+        .photo-toolbar .close-btn:hover { background: #c0392b; }
+        .photo-stage {
+            flex: 1; width: 100%; overflow: hidden; min-height: 0; display: flex;
+            align-items: center; justify-content: center; position: relative;
+            touch-action: none; cursor: grab;
+        }
+        .photo-stage.dragging { cursor: grabbing; }
+        .photo-stage img {
+            max-width: none; transform-origin: center center; user-select: none;
+            -webkit-user-drag: none; will-change: transform;
+        }
+        #photo-message { color: #ecf0f1; }
+
+        @media (max-width: 480px) {
+            .photo-toolbar .tool-btn { min-width: 46px; height: 44px; font-size: 17px; }
+            .modal-card { padding: 16px; }
+        }
+    </style>
+</head>
+<body onload="initApp()">
+
+<div class="app-container">
+
+    <!-- 0. SPLASH SCREEN (APP LAUNCH) -->
+    <div id="overview">
+        <h1 class="brand-name">NIRMALCITY</h1>
+        <div class="overview-logo">♻️</div>
+        <h2 class="overview-title">Smart Waste App</h2>
+        <p class="overview-subtitle">Report issues, track pickups, and keep our city green.</p>
+        <button class="get-started-btn" onclick="switchTab('auth')">Get Started</button>
+        <div class="creator-tag">Crafted by ZAYVORA</div>
+    </div>
+
+    <!-- FIXED TOP APP BAR -->
+    <header id="main-header">
+        <h1>NIRMALCITY</h1>
+        <p>Dashboard</p>
+    </header>
+
+    <!-- MAIN APP CONTENT -->
+    <div class="content-area" id="app-content" style="display: none;">
+        
+        <!-- 1. User Authentication -->
+        <div id="auth" class="section">
+            <div class="auth-toggle">
+                <button id="btn-show-login" class="active-btn" onclick="toggleAuth('login')">Login</button>
+                <button id="btn-show-signup" onclick="toggleAuth('signup')">Sign Up</button>
+            </div>
+
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <input type="email" id="login-email" placeholder="Email Address" required>
+                <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" required>
+                <div style="text-align: right; margin: -4px 0 6px;">
+                    <button type="button" class="auth-link-btn" onclick="startPasswordReset()">Forgot password?</button>
+                </div>
+                <button type="submit" class="submit-btn">Login to App</button>
+            </form>
+
+            <form id="signup-form" style="display: none;" onsubmit="handleSignupStep(event)">
+                <p id="signup-hint" class="auth-step-hint">Step 1 of 3 — we'll email you a 6-digit code</p>
+                <div class="signup-step" id="signup-step-1">
+                    <input type="email" id="signup-email" placeholder="Email Address" autocomplete="email" required>
+                    <button type="submit" class="submit-btn" id="signup-btn-1">Send OTP to my email</button>
+                </div>
+                <div class="signup-step" id="signup-step-2" style="display: none;">
+                    <input type="text" id="signup-otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+                           placeholder="6-digit verification code" autocomplete="one-time-code" required>
+                    <button type="submit" class="submit-btn">Verify Code</button>
+                    <button type="button" class="auth-link-btn" id="signup-resend" onclick="resendOtp()">Resend code</button>
+                </div>
+                <div class="signup-step" id="signup-step-3" style="display: none;">
+                    <input type="password" id="signup-password" placeholder="Password (at least 8 characters)" minlength="8" autocomplete="new-password" required>
+                    <button type="submit" class="submit-btn" id="signup-btn-3">Create Account</button>
+                </div>
+                <p id="signup-status" class="auth-step-status"></p>
+            </form>
+            <p id="welcome-msg" style="color: #11998e; font-weight: 600; margin-top: 15px; text-align: center; font-size: 14px;"></p>
+            <button id="logout-btn" type="button" class="submit-btn" onclick="handleLogout()" style="display:none; width:100%;">Log out</button>
+        </div>
+
+        <!-- 2. Report Waste Issues -->
+        <div id="report" class="section">
+            <img src="https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=800&q=80" alt="Report" class="section-banner">
+            <h2>Report Issue</h2>
+            <form id="report-form" onsubmit="handleReport(event)">
+                <div class="location-wrapper">
+                    <input type="text" id="issue-location" placeholder="Location or tap ->" required>
+                    <button type="button" class="location-btn" onclick="getLocation()">📍</button>
+                </div>
+                <input type="hidden" id="issue-latitude">
+                <input type="hidden" id="issue-longitude">
+                <select id="issue-type" required>
+                    <option value="" disabled selected>Select Problem Type</option>
+                    <option value="Overflowing Bin">🗑️ Overflowing Bin</option>
+                    <option value="Garbage on Road">🛣️ Garbage on Road</option>
+                    <option value="Illegal Dumping">⚠️ Illegal Dumping</option>
+                </select>
+                <textarea id="issue-desc" placeholder="Details..." rows="2" required></textarea>
+                <div class="file-upload-wrapper">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #11998e; font-size: 13px;">📸 Live Photo:</label>
+                    <input type="file" id="issue-photo" accept="image/*" capture="environment">
+                </div>
+                <button type="submit" class="submit-btn">Submit Report</button>
+            </form>
+        </div>
+
+        <!-- 3. Rewards (formerly Waste Pickup Request — the request form was removed) -->
+        <div id="pickup" class="section">
+            <!-- Points from AI-verified reports + partner coupons -->
+            <div class="rewards-panel">
+                <div class="rewards-head">
+                    <h3>🎁 Reward Earnings</h3>
+                    <span class="points-pill"><strong id="rewards-points">0</strong> pts</span>
+                </div>
+                <p class="rewards-hint">Earn 10 points for every AI-verified report, then unlock real partner coupon codes — every offer shows its last-verified date, and expired codes are removed automatically.</p>
+                <div id="earnings-list" class="earnings-list"></div>
+                <h4 class="coupons-title">Partner Coupons <small>cashback &amp; discount</small></h4>
+                <div id="coupons-grid" class="coupons-grid"></div>
+            </div>
+        </div>
+
+        <!-- 4. Complaint Tracking -->
+        <div id="track" class="section">
+            <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80" alt="Track" class="section-banner">
+            <h2>My Activity</h2>
+            <div class="table-responsive">
+                <table id="user-table">
+                    <thead><tr><th>Pic</th><th>Issue</th><th>Action</th></tr></thead>
+                    <tbody id="user-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 5. Admin Dashboard -->
+        <div id="admin" class="section">
+            <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" alt="Admin" class="section-banner">
+            <h2>Live Monitor</h2>
+            <div class="table-responsive">
+                <table id="admin-table">
+                    <thead><tr><th>Pic</th><th>Issue</th><th>Action</th></tr></thead>
+                    <tbody id="admin-table-body"></tbody>
+                </table>
+            </div>
+            <div id="coupon-feed-card" style="display:none; margin-top:20px; padding:16px; background:#fff; border:1px solid #e3e8ee; border-radius:12px;">
+                <h3 style="margin:0 0 6px;">🔄 Automatic Coupon Feed</h3>
+                <p id="coupon-feed-summary" style="margin:0 0 6px; color:#7f8c8d; font-size:14px;">Loading…</p>
+                <div id="coupon-feed-sources" style="font-size:13px; color:#555; margin-bottom:10px; line-height:1.5;"></div>
+                <button type="button" id="coupon-feed-refresh-btn" class="mini-btn" onclick="refreshCouponFeed()">↻ Refresh now</button>
+                <p id="coupon-feed-result" style="font-size:13px; margin:8px 0 0; color:#2c7a51;"></p>
+            </div>
+        </div>
+
+        <!-- 6. Waste Awareness Section -->
+        <div id="awareness" class="section">
+            <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80" alt="Awareness" class="section-banner">
+            <h2>Smart Guidelines</h2>
+            <div class="awareness-card green-bin">
+                <h3 style="color: #16a085;">🟢 Wet Waste</h3>
+                <p>Food, leaves, peels. (Composting)</p>
+            </div>
+            <div class="awareness-card blue-bin">
+                <h3 style="color: #2980b9;">🔵 Dry Waste</h3>
+                <p>Plastic, paper, glass. (Recycling)</p>
+            </div>
+            <div class="awareness-card red-bin">
+                <h3 style="color: #c0392b;">🔴 Hazardous</h3>
+                <p>Batteries, medical, e-waste.</p>
+            </div>
+        </div>
+
+    </div> <!-- End Content -->
+
+    <!-- FIXED BOTTOM NAVIGATION BAR -->
+    <nav id="main-nav">
+        <button id="nav-auth" onclick="switchTab('auth')"><span class="icon">👤</span>Profile</button>
+        <button id="nav-report" onclick="switchTab('report')"><span class="icon">📷</span>Report</button>
+        <button id="nav-pickup" onclick="switchTab('pickup')"><span class="icon">🎁</span>Rewards</button>
+        <button id="nav-track" onclick="switchTab('track')"><span class="icon">📍</span>Track</button>
+        <button id="nav-admin" onclick="switchTab('admin')"><span class="icon">⚙️</span>Admin</button>
+        <button id="nav-awareness" onclick="switchTab('awareness')"><span class="icon">💡</span>Guide</button>
+    </nav>
+
+</div> <!-- End App Container -->
+
+<!-- DETAILS MODAL (Live Monitor) -->
+<div id="details-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="details-title">
+    <div class="modal-card">
+        <div class="modal-head">
+            <h3 id="details-title">Query Details</h3>
+            <button type="button" class="icon-btn" id="details-close" title="Close" aria-label="Close">✕</button>
+        </div>
+        <dl class="detail-list" id="details-body"></dl>
+        <div class="detail-actions" id="details-actions"></div>
+    </div>
+</div>
+
+<!-- PHOTO VIEWER (Live Monitor) -->
+<div id="photo-modal" class="modal" role="dialog" aria-modal="true" aria-label="Photo viewer">
+    <div class="photo-toolbar">
+        <button type="button" class="tool-btn" id="photo-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+        <span class="zoom-level" id="photo-zoom-level">100%</span>
+        <button type="button" class="tool-btn" id="photo-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+        <button type="button" class="tool-btn" id="photo-zoom-reset" title="Reset zoom">Reset</button>
+        <button type="button" class="tool-btn" id="photo-zoom-fit" title="Fit to screen">Fit</button>
+        <button type="button" class="tool-btn close-btn" id="photo-close" title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="photo-stage" id="photo-stage">
+        <img id="photo-image" alt="Complaint photo" draggable="false" style="display:none;">
+        <p class="modal-empty" id="photo-message" style="display:none;"></p>
+    </div>
+</div>
+
+<script src="/app.js?v=6"></script>
+
+</body>
